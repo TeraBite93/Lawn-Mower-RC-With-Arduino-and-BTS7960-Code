@@ -1,0 +1,124 @@
+// Pins per motore 1
+#define RPWM_1 5 
+#define R_EN_1 14
+#define R_IS_1 15
+#define LPWM_1 6
+#define L_EN_1 16  
+#define L_IS_1 17
+
+// Pins per motore 2  
+#define RPWM_2 8
+#define R_EN_2 18
+#define R_IS_2 19 
+#define LPWM_2 9
+#define L_EN_2 A0
+#define L_IS_2 A1
+
+#define CW 1
+#define CCW 0
+
+#define debug 1
+
+const int channelPin = 2; 
+const int channelPinSteering = 3;
+
+#include <RobojaxBTS7960.h>
+
+RobojaxBTS7960 motor1(R_EN_1, RPWM_1, R_IS_1, L_EN_1, LPWM_1, L_IS_1, debug);
+RobojaxBTS7960 motor2(R_EN_2, RPWM_2, R_IS_2, L_EN_2, LPWM_2, L_IS_2, debug);
+
+void setup() {
+
+  Serial.begin(9600);
+  
+  motor1.begin();
+  motor2.begin();
+  
+}
+
+void loop() {
+
+  int channelValue = pulseIn(channelPin, HIGH);
+  int channelValueSteering = pulseIn(channelPinSteering, HIGH);
+
+  // Controlla se siamo in retromarcia
+  if(channelValue < 1400) {
+    if(channelValue < 1030) {
+    // Ferma i motori
+    motor1.stop(); 
+    motor2.stop();
+  } else {
+    // Calcola potenza retromarcia      
+    int powerBackward = map(channelValue, 1400, 1050, 0, 100);
+    powerBackward = constrain(powerBackward, 0, 100);
+
+    // Controlla sterzata
+    if (channelValueSteering >= 1030 && channelValueSteering < 1400) {
+    
+      // Sterzo sinistra
+      int steeringPowerLeft = map(channelValueSteering, 1400, 1030, 0, 100);
+      steeringPowerLeft = constrain(steeringPowerLeft, 0, 100);
+
+      motor1.rotate(powerBackward + steeringPowerLeft, CCW);
+      motor2.rotate(powerBackward - steeringPowerLeft, CCW);
+
+    } else if (channelValueSteering >= 1500 && channelValueSteering <= 1890) {
+
+      // Sterzo destra
+      int steeringPowerRight = map(channelValueSteering, 1500, 1890, 0, 100);
+      steeringPowerRight = constrain(steeringPowerRight, 0, 100);
+
+      motor1.rotate(powerBackward - steeringPowerRight, CCW);
+      motor2.rotate(powerBackward + steeringPowerRight, CCW);
+    
+    } else {
+
+      // Nessuno sterzo
+      motor1.rotate(powerBackward, CCW);
+      motor2.rotate(powerBackward, CCW);
+    
+    }
+  }
+
+  } else {
+
+    // Calcola potenza avanti
+    int powerForward = map(channelValue, 1500, 1890, 0, 100);
+    powerForward = constrain(powerForward, 0, 100);
+
+    // Controlla sterzata
+    if (channelValueSteering >= 1030 && channelValueSteering < 1400) {
+
+      // Sterzo sinistra
+      int steeringPowerLeft = map(channelValueSteering, 1400, 1030, 0, 100);
+      steeringPowerLeft = constrain(steeringPowerLeft, 0, 100);
+
+      motor1.rotate(powerForward - steeringPowerLeft, CW);
+      motor2.rotate(powerForward + steeringPowerLeft, CW);
+
+    } else if (channelValueSteering >= 1500 && channelValueSteering <= 1890) {
+    
+      // Sterzo destra  
+      int steeringPowerRight = map(channelValueSteering, 1500, 1890, 0, 100);
+      steeringPowerRight = constrain(steeringPowerRight, 0, 100);
+
+      motor1.rotate(powerForward + steeringPowerRight, CW);
+      motor2.rotate(powerForward - steeringPowerRight, CW);
+    
+    } else {
+
+      // Nessuno sterzo
+      motor1.rotate(powerForward, CW);
+      motor2.rotate(powerForward, CW);
+      
+    }
+
+  }
+
+  // Stampa valori
+  Serial.print("Channel: ");
+  Serial.print(channelValue);
+
+  delay(10);
+
+}
