@@ -1,4 +1,4 @@
-# lawnmower
+# Lawn Mower RC With Arduino and BTS7960 Code
 
 Codice per Arduino controllo motori (Ho usato quelli per sedia elettrica) 12/24V con BTS7960, due motori in Skid Steering. Partire come base dalla Rev1.1
 
